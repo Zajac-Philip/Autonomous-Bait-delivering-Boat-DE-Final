@@ -1,0 +1,67 @@
+import serial
+import time
+import math
+
+gps = serial.Serial('/dev/serial0', baudrate=9600, timeout=1)
+
+print("GPS Navigation - 200 Yards West")
+print()
+
+home_lat = None
+home_lon = None
+
+while home_lat is None:
+    line = gps.readline().decode('ascii', errors='replace')
+    
+    if '$GPGGA' in line or '$GNGGA' in line:
+        parts = line.split(',')
+        
+        if len(parts) > 5 and parts[2] and parts[4]:
+            lat = float(parts[2][:2]) + float(parts[2][2:]) / 60
+            if parts[3] == 'S':
+                lat = -lat
+            
+            lon = float(parts[4][:3]) + float(parts[4][3:]) / 60
+            if parts[5] == 'W':
+                lon = -lon
+            
+            home_lat = lat
+            home_lon = lon
+
+meters_per_degree = 111320 * math.cos(math.radians(home_lat))
+degrees_west = 182.88 / meters_per_degree
+
+target_lat = home_lat
+target_lon = home_lon - degrees_west
+
+print(f"Home: Lat {home_lat:.6f}  Lon {home_lon:.6f}")
+print(f"Goal: Lat {target_lat:.6f}  Lon {target_lon:.6f}")
+print()
+
+while True:
+    line = gps.readline().decode('ascii', errors='replace')
+    
+    if '$GPGGA' in line or '$GNGGA' in line:
+        parts = line.split(',')
+        
+        if len(parts) > 5 and parts[2] and parts[4]:
+            lat = float(parts[2][:2]) + float(parts[2][2:]) / 60
+            if parts[3] == 'S':
+                lat = -lat
+            
+            lon = float(parts[4][:3]) + float(parts[4][3:]) / 60
+            if parts[5] == 'W':
+                lon = -lon
+            
+            lat_meters = 111320
+            lon_meters = 111320 * math.cos(math.radians(lat))
+            
+            delta_lat = (target_lat - lat) * lat_meters
+            delta_lon = (target_lon - lon) * lon_meters
+            
+            distance = math.sqrt(delta_lat**2 + delta_lon**2)
+            distance_yards = distance * 1.09361
+            
+            print(f"Now: Lat {lat:.6f}  Lon {lon:.6f}  Distance: {distance_yards:.1f} yards")
+    
+    time.sleep(1)
