@@ -1,0 +1,43 @@
+import RPi.GPIO as GPIO
+import time
+
+LEFT_MOTOR_SPEED = 17
+LEFT_MOTOR_DIR1 = 27
+LEFT_MOTOR_DIR2 = 22
+RIGHT_MOTOR_SPEED = 25
+RIGHT_MOTOR_DIR1 = 23
+RIGHT_MOTOR_DIR2 = 24
+
+GPIO.setmode(GPIO.BCM)
+GPIO.setwarnings(False)
+GPIO.setup([LEFT_MOTOR_SPEED, LEFT_MOTOR_DIR1, LEFT_MOTOR_DIR2], GPIO.OUT)
+GPIO.setup([RIGHT_MOTOR_SPEED, RIGHT_MOTOR_DIR1, RIGHT_MOTOR_DIR2], GPIO.OUT)
+
+left_motor = GPIO.PWM(LEFT_MOTOR_SPEED, 1000)
+right_motor = GPIO.PWM(RIGHT_MOTOR_SPEED, 1000)
+left_motor.start(0)
+right_motor.start(0)
+
+GPIO.output(LEFT_MOTOR_DIR1, GPIO.HIGH)
+GPIO.output(LEFT_MOTOR_DIR2, GPIO.LOW)
+GPIO.output(RIGHT_MOTOR_DIR1, GPIO.HIGH)
+GPIO.output(RIGHT_MOTOR_DIR2, GPIO.LOW)
+
+print("LEFT MOTOR 50%")
+left_motor.ChangeDutyCycle(50)
+time.sleep(2)
+left_motor.ChangeDutyCycle(0)
+
+print("RIGHT MOTOR 50%")
+right_motor.ChangeDutyCycle(50)
+time.sleep(2)
+right_motor.ChangeDutyCycle(0)
+
+print("BOTH 70%")
+left_motor.ChangeDutyCycle(70)
+right_motor.ChangeDutyCycle(70)
+time.sleep(2)
+
+left_motor.ChangeDutyCycle(0)
+right_motor.ChangeDutyCycle(0)
+GPIO.cleanup()
