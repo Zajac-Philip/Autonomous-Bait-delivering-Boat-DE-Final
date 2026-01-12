@@ -44,4 +44,20 @@ After finding the target position, the distance and bearing to target are calcul
 - LED status indicators
 
 ## Current project state:
-Currently, I have finished making an extremely rough skeleton with 
+Currently, I have finished making an extremely rough skeleton with all of my electrical components except for the independent battery.
+
+<img width="375" height="666" alt="IMG_3532-removebg-preview" src="https://github.com/user-attachments/assets/7672d836-4e12-4f47-9f94-2902e3a97885" />
+
+<img width="375" height="666" alt="IMG_3533-removebg-preview" src="https://github.com/user-attachments/assets/cdccaa98-b3bc-4713-9791-59032a02aeac" />
+
+I modeled a boat hull that is to be printed in 2 parts and fiberglassed over to waterproof and strengthen it. Both compartments contain a lower compartment which will have the bottom filled with sand so that the center of mass remains below the center of buoyancy, keeping the boat stable in the water
+
+<img width="783" height="558" alt="Screenshot 2025-12-12 223926" src="https://github.com/user-attachments/assets/29c8d48e-7a5e-4c47-978e-c5e379d4efb3" />
+
+<img width="617" height="362" alt="Screenshot 2025-12-12 223949" src="https://github.com/user-attachments/assets/689cdefb-972a-4b9b-bfee-1d82e33ab29c" />
+
+Fully assembled, the hull will look like this:
+
+<img width="840" height="588" alt="Screenshot 2025-12-02 180522" src="https://github.com/user-attachments/assets/e3bbd6b4-f58a-42be-9810-53848d85ff71" />
+<img width="614" height="792" alt="Screenshot 2025-12-02 180910" src="https://github.com/user-attachments/assets/b69d7230-cefc-480b-8b8e-608a69d23280" />
+
