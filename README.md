@@ -61,3 +61,6 @@ Fully assembled, the hull will look like this:
 <img width="840" height="588" alt="Screenshot 2025-12-02 180522" src="https://github.com/user-attachments/assets/e3bbd6b4-f58a-42be-9810-53848d85ff71" />
 <img width="614" height="792" alt="Screenshot 2025-12-02 180910" src="https://github.com/user-attachments/assets/b69d7230-cefc-480b-8b8e-608a69d23280" />
 
+## Overall concerns during project:
+
+Due to budget issues, I ended up purchasing a counterfeitted magnetometer, which is only able to handle updating at 10 Hz, rather than 200 Hz like standard Magnetometers can. Additionally, I bought small motors because they were cheaper, but if I were to have the full weighted hull, they would move the vessel extremely slowly and not fare very well against disruptions in the water. I plan on buying larger brushless motors when I 3d print the Hull.
