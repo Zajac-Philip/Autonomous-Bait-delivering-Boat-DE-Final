@@ -38,10 +38,13 @@ The boat performs the following after starting:
 ## How the steering works:
 After finding the target position, the distance and bearing to target are calculated using current position and bearing values. Every 0.1 seconds, the boat compares its current heading with the bearing to the target. If the difference between the two exceed 20 degrees, it turns by slowing the port outboard motor to turn left and the starboard outboard motor to turn right. When within the 20 degree range, both motors operate at full speed.
 
-##Future Improvements:
+## Future Improvements:
 - safety features that automatically make the boat return to the starting position during events like water entering the waterproof electronics box, or low battery.
 - servo system to automatically drop the bait at the target location
 - LED status indicators
+- battery that will power both the Pi and motor controllers. Below, I included a picture of the adjustable step down voltage converter
+
+  <img width="502" height="300" alt="Screenshot 2026-01-12 113813" src="https://github.com/user-attachments/assets/293abea0-2daa-4bcd-88ae-daba2e92da8f" />
 
 ## Current project state:
 Currently, I have finished making an extremely rough skeleton with all of my electrical components except for the independent battery.
