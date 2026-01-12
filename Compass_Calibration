@@ -1,0 +1,60 @@
+import smbus
+import time
+import math
+
+bus = smbus.SMBus(1)
+addr = 0x2c
+
+for i in range(3):
+    bus.write_byte_data(addr, 0x0B, 0x01)
+    time.sleep(0.2)
+bus.write_byte_data(addr, 0x09, 0x01)
+time.sleep(0.2)
+bus.write_byte_data(addr, 0x0A, 0x01)
+time.sleep(0.2)
+
+
+print("Start in 3...\n")
+time.sleep(3)
+
+max_x = -999999
+min_x = 999999
+max_y = -999999
+min_y = 999999
+
+start_time = time.time()
+
+while time.time() - start_time < 20:
+    data = bus.read_i2c_block_data(addr, 0x00, 6)
+    
+    mag_x = data[0] | (data[1] << 8)
+    mag_y = data[2] | (data[3] << 8)
+    
+    if mag_x > 32767:
+        mag_x -= 65536
+    if mag_y > 32767:
+        mag_y -= 65536
+    
+    if mag_x > max_x:
+        max_x = mag_x
+    if mag_x < min_x:
+        min_x = mag_x
+    if mag_y > max_y:
+        max_y = mag_y
+    if mag_y < min_y:
+        min_y = mag_y
+    
+    print(f"X: {mag_x:6d}  Y: {mag_y:6d}", end='\r')
+    time.sleep(0.1)
+
+offset_x = (max_x + min_x) / 2
+offset_y = (max_y + min_y) / 2
+
+print("\n\n" + "=" * 60)
+print("DONE")
+print("=" * 60)
+print(f"\nX range: {min_x} to {max_x}")
+print(f"Y range: {min_y} to {max_y}")
+print(f"\nCalculated offsets:")
+print(f"offset_x = {offset_x:.1f}")
+print(f"offset_y = {offset_y:.1f}")
