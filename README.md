@@ -35,3 +35,13 @@ The boat performs the following after starting:
 - Navigates to the target
 - Waits 5 seconds during the bait release
 - Returns to home location
+## How the steering works:
+After finding the target position, the distance and bearing to target are calculated using current position and bearing values. Every 0.1 seconds, the boat compares its current heading with the bearing to the target. If the difference between the two exceed 20 degrees, it turns by slowing the port outboard motor to turn left and the starboard outboard motor to turn right. When within the 20 degree range, both motors operate at full speed.
+
+##Future Improvements:
+- safety features that automatically make the boat return to the starting position during events like water entering the waterproof electronics box, or low battery.
+- servo system to automatically drop the bait at the target location
+- LED status indicators
+
+## Current project state:
+Currently, I have finished making an extremely rough skeleton with 
