@@ -21,12 +21,17 @@ The boat gets its starting position, then selects a point 200 yards west before 
 ![wiring map (1)](https://github.com/user-attachments/assets/db13910b-30c6-4062-9a0c-e2a558e5f1d8)
 
 ## Required things to enable on the Pi:
-I2C must be enabled
-The following library must be installed:
-python3-rpi.gpio python3-smbus i2c-tools
+- I2C must be enabled
+- This library must be installed: python3-rpi.gpio python3-smbus i2c-tools
 
 ## Running Process:
 
 First, you must calibrate the compass by running the compass calibration code. By spinning the boat in a full circle, the magnetometer takes the difference between the highest and lowest values for the X and Y direction and halves them to find the offset values. These values must be put into the code for the mission navigation so that it takes proper headings.
 
 ### Mission
+The boat performs the following after starting:
+- Waits for the GPS to lock then logs the home position
+- Calculates the taget position 200 yards west
+- Navigates to the target
+- Waits 5 seconds during the bait release
+- Returns to home location
