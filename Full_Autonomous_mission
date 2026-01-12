@@ -1,0 +1,207 @@
+import RPi.GPIO as GPIO
+import smbus
+import serial
+import time
+import math
+
+LEFT_MOTOR_SPEED = 17
+LEFT_MOTOR_DIR1 = 27
+LEFT_MOTOR_DIR2 = 22
+RIGHT_MOTOR_SPEED = 25
+RIGHT_MOTOR_DIR1 = 23
+RIGHT_MOTOR_DIR2 = 24
+
+offset_x = 256
+offset_y = 121
+
+bus = smbus.SMBus(1)
+compass_addr = 0x2c
+gps = serial.Serial('/dev/serial0', baudrate=9600, timeout=0.1)
+
+GPIO.setmode(GPIO.BCM)
+GPIO.setwarnings(False)
+GPIO.setup([LEFT_MOTOR_SPEED, LEFT_MOTOR_DIR1, LEFT_MOTOR_DIR2], GPIO.OUT)
+GPIO.setup([RIGHT_MOTOR_SPEED, RIGHT_MOTOR_DIR1, RIGHT_MOTOR_DIR2], GPIO.OUT)
+
+left_motor = GPIO.PWM(LEFT_MOTOR_SPEED, 1000)
+right_motor = GPIO.PWM(RIGHT_MOTOR_SPEED, 1000)
+left_motor.start(0)
+right_motor.start(0)
+
+GPIO.output(LEFT_MOTOR_DIR1, GPIO.HIGH)
+GPIO.output(LEFT_MOTOR_DIR2, GPIO.LOW)
+GPIO.output(RIGHT_MOTOR_DIR1, GPIO.HIGH)
+GPIO.output(RIGHT_MOTOR_DIR2, GPIO.LOW)
+
+def start_compass():
+    for i in range(3):
+        bus.write_byte_data(compass_addr, 0x0B, 0x01)
+        time.sleep(0.2)
+    bus.write_byte_data(compass_addr, 0x09, 0x01)
+    time.sleep(0.2)
+    bus.write_byte_data(compass_addr, 0x0A, 0x01)
+    time.sleep(0.2)
+
+def read_heading():
+    data = bus.read_i2c_block_data(compass_addr, 0x00, 6)
+    mag_x = data[0] | (data[1] << 8)
+    mag_y = data[2] | (data[3] << 8)
+    if mag_x > 32767:
+        mag_x -= 65536
+    if mag_y > 32767:
+        mag_y -= 65536
+    mag_x = mag_x - offset_x
+    mag_y = mag_y - offset_y
+    heading = math.atan2(mag_y, mag_x) * 180 / math.pi
+    if heading < 0:
+        heading += 360
+    return heading
+
+def try_read_gps():
+    if gps.in_waiting:
+        line = gps.readline().decode('ascii', errors='replace')
+        if '$GPGGA' in line or '$GNGGA' in line:
+            parts = line.split(',')
+            if len(parts) > 5 and parts[2] and parts[4]:
+                lat = float(parts[2][:2]) + float(parts[2][2:]) / 60
+                if parts[3] == 'S':
+                    lat = -lat
+                lon = float(parts[4][:3]) + float(parts[4][3:]) / 60
+                if parts[5] == 'W':
+                    lon = -lon
+                return lat, lon
+    return None, None
+
+def calculate_distance(lat1, lon1, lat2, lon2):
+    R = 6371000
+    lat1_rad = math.radians(lat1)
+    lat2_rad = math.radians(lat2)
+    delta_lat = math.radians(lat2 - lat1)
+    delta_lon = math.radians(lon2 - lon1)
+    a = math.sin(delta_lat/2)**2 + math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(delta_lon/2)**2
+    c = 2 * math.asin(math.sqrt(a))
+    return R * c
+
+def calculate_bearing(lat1, lon1, lat2, lon2):
+    lat1_rad = math.radians(lat1)
+    lat2_rad = math.radians(lat2)
+    delta_lon = math.radians(lon2 - lon1)
+    y = math.sin(delta_lon) * math.cos(lat2_rad)
+    x = math.cos(lat1_rad) * math.sin(lat2_rad) - math.sin(lat1_rad) * math.cos(lat2_rad) * math.cos(delta_lon)
+    bearing = math.degrees(math.atan2(y, x))
+    return (bearing + 360) % 360
+
+def go_straight():
+    left_motor.ChangeDutyCycle(70)
+    right_motor.ChangeDutyCycle(70)
+
+def turn_left():
+    left_motor.ChangeDutyCycle(30)
+    right_motor.ChangeDutyCycle(70)
+
+def turn_right():
+    left_motor.ChangeDutyCycle(70)
+    right_motor.ChangeDutyCycle(30)
+
+def stop_motors():
+    left_motor.ChangeDutyCycle(0)
+    right_motor.ChangeDutyCycle(0)
+
+def navigate_to(target_lat, target_lon, target_name):
+    current_lat = home_lat
+    current_lon = home_lon
+    bearing_to_target = calculate_bearing(current_lat, current_lon, target_lat, target_lon)
+    distance = calculate_distance(current_lat, current_lon, target_lat, target_lon)
+    
+    loop_count = 0
+    
+    while distance > 5:
+        current_heading = read_heading()
+        
+        new_lat, new_lon = try_read_gps()
+        if new_lat is not None:
+            current_lat = new_lat
+            current_lon = new_lon
+            distance = calculate_distance(current_lat, current_lon, target_lat, target_lon)
+            bearing_to_target = calculate_bearing(current_lat, current_lon, target_lat, target_lon)
+        
+        error = bearing_to_target - current_heading
+        if error > 180:
+            error -= 360
+        elif error < -180:
+            error += 360
+        
+        if error > 20:
+            turn_left()
+            action = "TURN LEFT"
+        elif error < -20:
+            turn_right()
+            action = "TURN RIGHT"
+        else:
+            go_straight()
+            action = "STRAIGHT"
+        
+        if loop_count % 10 == 0:
+            distance_yards = distance * 1.09361
+            print(f"{target_name} | Distance: {distance:.1f}m ({distance_yards:.1f}yd) | Bearing: {bearing_to_target:.0f}° | Heading: {current_heading:.0f}° | {action}")
+        
+        loop_count += 1
+        time.sleep(0.1)
+    
+    print(f"{target_name} REACHED!")
+    stop_motors()
+
+print("AUTONOMOUS BOAT - FULL MISSION")
+print("=" * 60)
+print("Initializing compass...")
+start_compass()
+time.sleep(1)
+
+print("Getting GPS fix for home position...")
+home_lat = None
+home_lon = None
+
+while home_lat is None:
+    lat, lon = try_read_gps()
+    if lat is not None:
+        home_lat = lat
+        home_lon = lon
+    time.sleep(0.1)
+
+print(f"Home position locked: {home_lat:.6f}, {home_lon:.6f}")
+
+meters_west = 182.88
+meters_per_degree = 111320 * math.cos(math.radians(home_lat))
+degrees_west = meters_west / meters_per_degree
+target_lat = home_lat
+target_lon = home_lon - degrees_west
+
+print(f"Target position: {target_lat:.6f}, {target_lon:.6f}")
+print("=" * 60)
+print()
+
+try:
+    print("PHASE 1: GOING TO TARGET")
+    print("-" * 60)
+    navigate_to(target_lat, target_lon, "TARGET")
+    
+    print()
+    print("Waiting 5 seconds at target...")
+    time.sleep(5)
+    print()
+    
+    print("PHASE 2: RETURNING HOME")
+    print("-" * 60)
+    navigate_to(home_lat, home_lon, "HOME")
+    
+    print()
+    print("MISSION COMPLETE!")
+
+except KeyboardInterrupt:
+    print("\nStopped by user")
+
+finally:
+    stop_motors()
+    GPIO.cleanup()
+    gps.close()
+    print("System shutdown complete")
