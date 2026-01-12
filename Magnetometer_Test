@@ -1,0 +1,42 @@
+import smbus
+import time
+import math
+
+bus = smbus.SMBus(1)
+addr = 0x2c
+
+offset_x = 256
+offset_y = 121
+
+for i in range(3):
+    bus.write_byte_data(addr, 0x0B, 0x01)
+    time.sleep(0.2)
+bus.write_byte_data(addr, 0x09, 0x01)
+time.sleep(0.2)
+bus.write_byte_data(addr, 0x0A, 0x01)
+time.sleep(0.2)
+
+try:
+    while True:
+        data = bus.read_i2c_block_data(addr, 0x00, 6)
+        
+        mag_x = data[0] | (data[1] << 8)
+        mag_y = data[2] | (data[3] << 8)
+        
+        if mag_x > 32767:
+            mag_x -= 65536
+        if mag_y > 32767:
+            mag_y -= 65536
+        
+        mag_x = mag_x - offset_x
+        mag_y = mag_y - offset_y
+        
+        heading = math.atan2(mag_y, mag_x) * 180 / math.pi
+        if heading < 0:
+            heading += 360
+        
+        print(f"Heading: {heading:6.1f}°", end='\r')
+        time.sleep(0.2)
+        
+except KeyboardInterrupt:
+    print("\nStopped")
